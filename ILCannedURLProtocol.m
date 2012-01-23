@@ -63,7 +63,7 @@ static NSError *gILCannedError = nil;
 }
 
 + (void)setCannedStatusCode:(NSInteger)statusCode {
-	gILCannedStatusCode = 200;
+	gILCannedStatusCode = statusCode;
 }
 
 + (void)setCannedError:(NSError*)error {
