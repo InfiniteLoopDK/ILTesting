@@ -41,7 +41,7 @@ static NSError *gILCannedError = nil;
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
 	// For now only supporting http GET
-	return [[[request URL] scheme] isEqualToString:@"http"] && [[request HTTPMethod] isEqualToString:@"GET"];
+	return [[[request URL] scheme] isEqualToString:@"http"] && ([[request HTTPMethod] isEqualToString:@"GET"] || [[request HTTPMethod] isEqualToString:@"POST"]);
 }
 
 + (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request {
