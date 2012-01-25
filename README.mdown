@@ -1,0 +1,31 @@
+
+# ILTesting
+
+
+ILTesting provides a collection of Objective C helper classes primarily for assisting with testing. That is, if you can call the current content of one class a collection.
+
+### ILCannedURLProtocol
+
+ILCannedURLProtocol is intended for unit and mock testing of code that makes http requests. It will intercept the standard http protocol and respond with a predefined set of test data every time the test is executed. This way any outside influences can be eliminated from the test results.
+
+In order to use ILCannedURLProtocol, insert the following code in your test case before executing the code under test: 
+
+	[NSURLProtocol registerClass:[ILCannedURLProtocol class]];
+	[ILCannedURLProtocol setCannedStatusCode:200];
+	[ILCannedURLProtocol setCannedHeaders:testHeaders];
+	[ILCannedURLProtocol setCannedResponseData:testData];
+
+Make sure to unregister the ILCannedURLProtocol after each use:
+
+	[NSURLProtocol unregisterClass:[ILCannedURLProtocol class]];
+
+See also:
+
+* [Infinite Blog](http://www.infinite-loop.dk/blog/2011/09/using-nsurlprotocol-for-injecting-test-data/) - Using NSURLProtocol for Injecting Test Data
+
+Feel free to add enhancements, bug fixes, etc. and provide them back to the community!
+
+
+Thanks,
+
+Claus Broch
