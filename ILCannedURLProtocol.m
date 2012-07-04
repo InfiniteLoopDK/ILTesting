@@ -36,12 +36,18 @@ static NSData *gILCannedResponseData = nil;
 static NSDictionary *gILCannedHeaders = nil;
 static NSInteger gILCannedStatusCode = 200;
 static NSError *gILCannedError = nil;
+static NSArray *gILSupportedMethods = nil;
+static NSArray *gILSupportedSchemes = nil;
 
 @implementation ILCannedURLProtocol
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
-	// For now only supporting http GET
-	return [[[request URL] scheme] isEqualToString:@"http"] && ([[request HTTPMethod] isEqualToString:@"GET"] || [[request HTTPMethod] isEqualToString:@"POST"]);
+	
+	BOOL canInit = (
+					(!gILSupportedMethods || [gILSupportedMethods containsObject:[request HTTPMethod]]) &&
+					(!gILSupportedSchemes || [gILSupportedSchemes containsObject:[[request URL] scheme]])
+					);
+	return canInit;
 }
 
 + (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request {
@@ -75,6 +81,20 @@ static NSError *gILCannedError = nil;
 
 - (NSCachedURLResponse *)cachedResponse {
 	return nil;
+}
+
++ (void)setSupportedMethods:(NSArray*)methods {
+	if(methods != gILSupportedMethods) {
+		[gILSupportedMethods release];
+		gILSupportedMethods = [methods retain];
+	}
+}
+
++ (void)setSupportedSchemes:(NSArray*)schemes {
+	if(schemes != gILSupportedSchemes) {
+		[gILSupportedSchemes release];
+		gILSupportedSchemes = [schemes retain];
+	}
 }
 
 - (void)startLoading {

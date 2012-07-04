@@ -34,4 +34,7 @@
 + (void)setCannedStatusCode:(NSInteger)statusCode;
 + (void)setCannedError:(NSError*)error;
 
++ (void)setSupportedMethods:(NSArray*)methods;
++ (void)setSupportedSchemes:(NSArray*)schemes;
+
 @end
