@@ -39,6 +39,7 @@ static NSError *gILCannedError = nil;
 static NSArray *gILSupportedMethods = nil;
 static NSArray *gILSupportedSchemes = nil;
 static NSURL *gILSupportedBaseURL = nil;
+static CGFloat gILResponseDelay = 0;
 
 @implementation ILCannedURLProtocol
 
@@ -106,6 +107,12 @@ static NSURL *gILSupportedBaseURL = nil;
 	}
 }
 
+
++ (void)setResponseDelay:(CGFloat)responseDelay {
+	gILResponseDelay = responseDelay;
+}
+
+
 - (void)startLoading {
     NSURLRequest *request = [self request];
 	id<NSURLProtocolClient> client = [self client];
@@ -116,6 +123,11 @@ static NSURL *gILSupportedBaseURL = nil;
 																  statusCode:gILCannedStatusCode
 																headerFields:gILCannedHeaders 
 																 requestTime:0.0];
+		
+		[NSThread sleepForTimeInterval:gILResponseDelay];
+		//NSDate *loopUntil = [NSDate dateWithTimeIntervalSinceNow:gILResponseDelay];
+		//[[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode beforeDate:loopUntil];
+		
 		
 		[client URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
 		[client URLProtocol:self didLoadData:gILCannedResponseData];

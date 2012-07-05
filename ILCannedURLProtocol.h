@@ -38,5 +38,7 @@
 + (void)setSupportedSchemes:(NSArray*)schemes;
 + (void)setSupportedBaseURL:(NSURL*)baseURL;
 
++ (void)setResponseDelay:(CGFloat)responseDelay;
+
 
 @end
