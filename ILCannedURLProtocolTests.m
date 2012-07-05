@@ -10,6 +10,21 @@
 
 @implementation ILCannedURLProtocolTests
 
+- (void)setUp {
+	[super setUp];
+	
+	[NSURLProtocol registerClass:[ILCannedURLProtocol class]];
+	[ILCannedURLProtocol setCannedStatusCode:200];
+	
+	[ILCannedURLProtocol setCannedHeaders:nil];
+	[ILCannedURLProtocol setCannedResponseData:nil];
+	[ILCannedURLProtocol setCannedError:nil];
+	
+	[ILCannedURLProtocol setSupportedMethods:nil];
+	[ILCannedURLProtocol setSupportedSchemes:nil];
+	[ILCannedURLProtocol setSupportedBaseURL:nil];
+}
+
 - (void)testCanInitWithGETHTTPRequestWithSupportedSchemesAndMethodsNotSet {
 	
 	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com"]];
@@ -74,6 +89,17 @@
 	[ILCannedURLProtocol setSupportedSchemes:[NSArray arrayWithObject:@"https"]];
 	
 	STAssertFalse([ILCannedURLProtocol canInitWithRequest:request], @"ILCannedURLProtocol does not support a GET HTTP request");
+}
+
+- (void)testCanInitWithRequestWithSupportedBaseURL {
+	
+	NSMutableURLRequest *goodRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com/this/is/a/test/yeah"]];
+	NSMutableURLRequest *badRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://anothertest.com"]];
+	
+	[ILCannedURLProtocol setSupportedBaseURL:[NSURL URLWithString:@"http://test.com"]];
+	
+	STAssertTrue([ILCannedURLProtocol canInitWithRequest:goodRequest], @"ILCannedURLProtocol does not support a request with base url");
+	STAssertFalse([ILCannedURLProtocol canInitWithRequest:badRequest], @"ILCannedURLProtocol does not support a request with base url");
 }
 
 @end

@@ -38,14 +38,16 @@ static NSInteger gILCannedStatusCode = 200;
 static NSError *gILCannedError = nil;
 static NSArray *gILSupportedMethods = nil;
 static NSArray *gILSupportedSchemes = nil;
+static NSURL *gILSupportedBaseURL = nil;
 
 @implementation ILCannedURLProtocol
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
 	
 	BOOL canInit = (
-					(!gILSupportedMethods || [gILSupportedMethods containsObject:[request HTTPMethod]]) &&
-					(!gILSupportedSchemes || [gILSupportedSchemes containsObject:[[request URL] scheme]])
+					(!gILSupportedBaseURL || [request.URL.absoluteString hasPrefix:gILSupportedBaseURL.absoluteString]) &&
+					(!gILSupportedMethods || [gILSupportedMethods containsObject:request.HTTPMethod]) &&
+					(!gILSupportedSchemes || [gILSupportedSchemes containsObject:request.URL.scheme])
 					);
 	return canInit;
 }
@@ -94,6 +96,13 @@ static NSArray *gILSupportedSchemes = nil;
 	if(schemes != gILSupportedSchemes) {
 		[gILSupportedSchemes release];
 		gILSupportedSchemes = [schemes retain];
+	}
+}
+
++ (void)setSupportedBaseURL:(NSURL*)baseURL {
+	if(baseURL != gILSupportedBaseURL) {
+		[gILSupportedBaseURL release];
+		gILSupportedBaseURL = [baseURL retain];
 	}
 }
 

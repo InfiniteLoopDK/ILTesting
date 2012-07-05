@@ -36,5 +36,7 @@
 
 + (void)setSupportedMethods:(NSArray*)methods;
 + (void)setSupportedSchemes:(NSArray*)schemes;
++ (void)setSupportedBaseURL:(NSURL*)baseURL;
+
 
 @end
