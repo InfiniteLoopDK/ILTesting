@@ -9,6 +9,6 @@
 #import <SenTestingKit/SenTestingKit.h>
 #import "ILCannedURLProtocol.h"
 
-@interface ILCannedURLProtocolTests : SenTestCase
+@interface ILCannedURLProtocolTests : SenTestCase <ILCannedURLProtocolDelegate>
 
 @end

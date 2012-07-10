@@ -32,6 +32,8 @@
 - (id)initWithURL:(NSURL*)URL statusCode:(NSInteger)statusCode headerFields:(NSDictionary*)headerFields requestTime:(double)requestTime;
 @end
 
+static id<ILCannedURLProtocolDelegate> gILDelegate = nil;
+
 static NSData *gILCannedResponseData = nil;
 static NSDictionary *gILCannedHeaders = nil;
 static NSInteger gILCannedStatusCode = 200;
@@ -55,6 +57,10 @@ static CGFloat gILResponseDelay = 0;
 
 + (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request {
 	return request;
+}
+
++ (void)setDelegate:(id<ILCannedURLProtocolDelegate>)delegate {
+	gILDelegate = delegate;
 }
 
 + (void)setCannedResponseData:(NSData*)data {
@@ -117,12 +123,33 @@ static CGFloat gILResponseDelay = 0;
     NSURLRequest *request = [self request];
 	id<NSURLProtocolClient> client = [self client];
 	
-	if(gILCannedResponseData) {
-		// Send the canned data
+	NSInteger statusCode = gILCannedStatusCode;
+	NSDictionary *headers = gILCannedHeaders;
+	NSData *responseData = gILCannedResponseData;
+	
+	if (gILCannedError) {
+		[client URLProtocol:self didFailWithError:gILCannedError];
+		
+	} else {
+		
+		if (gILDelegate && [gILDelegate respondsToSelector:@selector(responseDataForClient:request:)]) {
+			
+			if ([gILDelegate respondsToSelector:@selector(statusCodeForClient:request:)]) {
+				statusCode  = [gILDelegate statusCodeForClient:client request:request];
+			}
+			
+			if ([gILDelegate respondsToSelector:@selector(headersForClient:request:)]) {
+				headers  = [gILDelegate headersForClient:client request:request];
+			}
+						
+			responseData = [gILDelegate responseDataForClient:client request:request];
+		}
+		
+		
 		NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
-																  statusCode:gILCannedStatusCode
-																headerFields:gILCannedHeaders 
-																 requestTime:0.0];
+											   statusCode:statusCode
+											 headerFields:headers 
+											  requestTime:0.0];
 		
 		[NSThread sleepForTimeInterval:gILResponseDelay];
 		//NSDate *loopUntil = [NSDate dateWithTimeIntervalSinceNow:gILResponseDelay];
@@ -130,15 +157,13 @@ static CGFloat gILResponseDelay = 0;
 		
 		
 		[client URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
-		[client URLProtocol:self didLoadData:gILCannedResponseData];
+		[client URLProtocol:self didLoadData:responseData];
 		[client URLProtocolDidFinishLoading:self];
 		
 		[response release];
+		
 	}
-	else if(gILCannedError) {
-		// Send the canned error
-		[client URLProtocol:self didFailWithError:gILCannedError];
-	}
+	
 }
 
 - (void)stopLoading {
