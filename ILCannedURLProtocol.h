@@ -27,11 +27,27 @@
 
 #import <Foundation/Foundation.h>
 
+@protocol ILCannedURLProtocolDelegate <NSObject>
+- (NSData*)responseDataForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest*)request;
+@optional
+- (NSInteger)statusCodeForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest*)request;
+- (NSDictionary*)headersForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest*)request;
+@end
+
 @interface ILCannedURLProtocol : NSURLProtocol
+
++ (void)setDelegate:(id<ILCannedURLProtocolDelegate>)delegate;
 
 + (void)setCannedResponseData:(NSData*)data;
 + (void)setCannedHeaders:(NSDictionary*)headers;
 + (void)setCannedStatusCode:(NSInteger)statusCode;
 + (void)setCannedError:(NSError*)error;
+
++ (void)setSupportedMethods:(NSArray*)methods;
++ (void)setSupportedSchemes:(NSArray*)schemes;
++ (void)setSupportedBaseURL:(NSURL*)baseURL;
+
++ (void)setResponseDelay:(CGFloat)responseDelay;
+
 
 @end

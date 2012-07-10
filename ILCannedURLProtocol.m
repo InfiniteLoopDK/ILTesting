@@ -32,20 +32,35 @@
 - (id)initWithURL:(NSURL*)URL statusCode:(NSInteger)statusCode headerFields:(NSDictionary*)headerFields requestTime:(double)requestTime;
 @end
 
+static id<ILCannedURLProtocolDelegate> gILDelegate = nil;
+
 static NSData *gILCannedResponseData = nil;
 static NSDictionary *gILCannedHeaders = nil;
 static NSInteger gILCannedStatusCode = 200;
 static NSError *gILCannedError = nil;
+static NSArray *gILSupportedMethods = nil;
+static NSArray *gILSupportedSchemes = nil;
+static NSURL *gILSupportedBaseURL = nil;
+static CGFloat gILResponseDelay = 0;
 
 @implementation ILCannedURLProtocol
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
-	// For now only supporting http GET
-	return [[[request URL] scheme] isEqualToString:@"http"] && ([[request HTTPMethod] isEqualToString:@"GET"] || [[request HTTPMethod] isEqualToString:@"POST"]);
+	
+	BOOL canInit = (
+					(!gILSupportedBaseURL || [request.URL.absoluteString hasPrefix:gILSupportedBaseURL.absoluteString]) &&
+					(!gILSupportedMethods || [gILSupportedMethods containsObject:request.HTTPMethod]) &&
+					(!gILSupportedSchemes || [gILSupportedSchemes containsObject:request.URL.scheme])
+					);
+	return canInit;
 }
 
 + (NSURLRequest *)canonicalRequestForRequest:(NSURLRequest *)request {
 	return request;
+}
+
++ (void)setDelegate:(id<ILCannedURLProtocolDelegate>)delegate {
+	gILDelegate = delegate;
 }
 
 + (void)setCannedResponseData:(NSData*)data {
@@ -77,27 +92,78 @@ static NSError *gILCannedError = nil;
 	return nil;
 }
 
++ (void)setSupportedMethods:(NSArray*)methods {
+	if(methods != gILSupportedMethods) {
+		[gILSupportedMethods release];
+		gILSupportedMethods = [methods retain];
+	}
+}
+
++ (void)setSupportedSchemes:(NSArray*)schemes {
+	if(schemes != gILSupportedSchemes) {
+		[gILSupportedSchemes release];
+		gILSupportedSchemes = [schemes retain];
+	}
+}
+
++ (void)setSupportedBaseURL:(NSURL*)baseURL {
+	if(baseURL != gILSupportedBaseURL) {
+		[gILSupportedBaseURL release];
+		gILSupportedBaseURL = [baseURL retain];
+	}
+}
+
+
++ (void)setResponseDelay:(CGFloat)responseDelay {
+	gILResponseDelay = responseDelay;
+}
+
+
 - (void)startLoading {
     NSURLRequest *request = [self request];
 	id<NSURLProtocolClient> client = [self client];
 	
-	if(gILCannedResponseData) {
-		// Send the canned data
+	NSInteger statusCode = gILCannedStatusCode;
+	NSDictionary *headers = gILCannedHeaders;
+	NSData *responseData = gILCannedResponseData;
+	
+	if (gILCannedError) {
+		[client URLProtocol:self didFailWithError:gILCannedError];
+		
+	} else {
+		
+		if (gILDelegate && [gILDelegate respondsToSelector:@selector(responseDataForClient:request:)]) {
+			
+			if ([gILDelegate respondsToSelector:@selector(statusCodeForClient:request:)]) {
+				statusCode  = [gILDelegate statusCodeForClient:client request:request];
+			}
+			
+			if ([gILDelegate respondsToSelector:@selector(headersForClient:request:)]) {
+				headers  = [gILDelegate headersForClient:client request:request];
+			}
+						
+			responseData = [gILDelegate responseDataForClient:client request:request];
+		}
+		
+		
 		NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
-																  statusCode:gILCannedStatusCode
-																headerFields:gILCannedHeaders 
-																 requestTime:0.0];
+											   statusCode:statusCode
+											 headerFields:headers 
+											  requestTime:0.0];
+		
+		[NSThread sleepForTimeInterval:gILResponseDelay];
+		//NSDate *loopUntil = [NSDate dateWithTimeIntervalSinceNow:gILResponseDelay];
+		//[[NSRunLoop currentRunLoop] runMode: NSDefaultRunLoopMode beforeDate:loopUntil];
+		
 		
 		[client URLProtocol:self didReceiveResponse:response cacheStoragePolicy:NSURLCacheStorageNotAllowed];
-		[client URLProtocol:self didLoadData:gILCannedResponseData];
+		[client URLProtocol:self didLoadData:responseData];
 		[client URLProtocolDidFinishLoading:self];
 		
 		[response release];
+		
 	}
-	else if(gILCannedError) {
-		// Send the canned error
-		[client URLProtocol:self didFailWithError:gILCannedError];
-	}
+	
 }
 
 - (void)stopLoading {
