@@ -34,7 +34,7 @@
 
 - (void)testCanInitWithGETHTTPRequestWithSupportedSchemesAndMethodsNotSet {
 	
-	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com"]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
 	request.HTTPMethod = @"GET";
 	
 	[ILCannedURLProtocol setSupportedMethods:nil];
@@ -45,7 +45,7 @@
 
 - (void)testCanInitWithGETHTTPRequestWithSupportedSchemesAndMethodsEmpty {
 	
-	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com"]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
 	request.HTTPMethod = @"GET";
 	
 	[ILCannedURLProtocol setSupportedMethods:[NSArray array]];
@@ -56,7 +56,7 @@
 
 - (void)testCanInitWithGETHTTPRequestWithSupportedHTTPSchemesAndGETMethods{
 	
-	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com"]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
 	request.HTTPMethod = @"GET";
 	
 	[ILCannedURLProtocol setSupportedMethods:[NSArray arrayWithObject:@"GET"]];
@@ -67,7 +67,7 @@
 
 - (void)testCanInitWithPOSTHTTPSRequestWithSupportedHTTPSSchemesAndPOSTMethods{
 	
-	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"https://test.com"]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com"]];
 	request.HTTPMethod = @"POST";
 	
 	[ILCannedURLProtocol setSupportedMethods:[NSArray arrayWithObject:@"POST"]];
@@ -78,7 +78,7 @@
 
 - (void)testCanInitWithPOSTHTTPRequestWithSupportedHTTPSchemesAndGETMethods{
 	
-	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com"]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
 	request.HTTPMethod = @"POST";
 	
 	[ILCannedURLProtocol setSupportedMethods:[NSArray arrayWithObject:@"GET"]];
@@ -89,7 +89,7 @@
 
 - (void)testCanInitWithGETHTTPRequestWithSupportedHTTPSSchemesAndGETMethods{
 	
-	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com"]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
 	request.HTTPMethod = @"GET";
 	
 	[ILCannedURLProtocol setSupportedMethods:[NSArray arrayWithObject:@"GET"]];
@@ -100,10 +100,10 @@
 
 - (void)testCanInitWithRequestWithSupportedBaseURL {
 	
-	NSMutableURLRequest *goodRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com/this/is/a/test/yeah"]];
-	NSMutableURLRequest *badRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://anothertest.com"]];
+	NSMutableURLRequest *goodRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testCanInitWithRequestWithSupportedBaseURL"]];
+	NSMutableURLRequest *badRequest = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.org"]];
 	
-	[ILCannedURLProtocol setSupportedBaseURL:[NSURL URLWithString:@"http://test.com"]];
+	[ILCannedURLProtocol setSupportedBaseURL:[NSURL URLWithString:@"http://example.com"]];
 	
 	STAssertTrue([ILCannedURLProtocol canInitWithRequest:goodRequest], @"ILCannedURLProtocol does not support a request with base url");
 	STAssertFalse([ILCannedURLProtocol canInitWithRequest:badRequest], @"ILCannedURLProtocol does not support a request with base url");
@@ -112,7 +112,7 @@
 
 - (void)testStartLoadingWithoutDelegate {
 	
-	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://test.com/this/is/a/test/yeah"]];
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com"]];
 	
 	id requestObject = [NSDictionary dictionaryWithObjectsAndKeys:
 				 [NSArray arrayWithObjects:[NSNumber numberWithInt:0], [NSNumber numberWithInt:1], [NSNumber numberWithInt:2], nil], @"array", 
