@@ -47,11 +47,18 @@ static CGFloat gILResponseDelay = 0;
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
 	
-	BOOL canInit = (
-					(!gILSupportedBaseURL || [request.URL.absoluteString hasPrefix:gILSupportedBaseURL.absoluteString]) &&
-					(!gILSupportedMethods || [gILSupportedMethods containsObject:request.HTTPMethod]) &&
-					(!gILSupportedSchemes || [gILSupportedSchemes containsObject:request.URL.scheme])
-					);
+	BOOL canInit = YES;
+	
+	if (gILDelegate && [gILDelegate respondsToSelector:@selector(shouldInitWithRequest:)]) {
+		canInit = [gILDelegate shouldInitWithRequest:request];
+	} else {
+		canInit = (
+				   (!gILSupportedBaseURL || [request.URL.absoluteString hasPrefix:gILSupportedBaseURL.absoluteString]) &&
+				   (!gILSupportedMethods || [gILSupportedMethods containsObject:request.HTTPMethod]) &&
+				   (!gILSupportedSchemes || [gILSupportedSchemes containsObject:request.URL.scheme])
+				   );
+	}
+	
 	return canInit;
 }
 
