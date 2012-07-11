@@ -157,6 +157,43 @@
 	STAssertTrue([[responseObject objectForKey:@"testName"] isEqual:@"testAgainStartLoadingWithDelegate"], @"wrong canned response");
 }
 
+- (void)testStartLoadingWithDelegatePlainJSONResponse {
+	
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testStartLoadingWithDelegatePlainJSONResponse"]];
+	
+	[ILCannedURLProtocol setDelegate:self];
+	
+	NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+	id responseObject = [NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil];
+	
+	STAssertNotNil(responseObject, @"no canned response from http request");
+	STAssertTrue([responseObject isKindOfClass:[NSDictionary class]], @"canned response has wrong format (not dictionary)");
+	STAssertTrue([[responseObject objectForKey:@"testName"] isEqual:@"testStartLoadingWithDelegatePlainJSONResponse"], @"wrong canned response");
+}
+
+- (void)testCanInitWithRequestWithDelegateShouldInitWithRequest {
+	
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testCanInitWithRequestWithDelegateShouldInitWithRequest"]];
+	
+	[ILCannedURLProtocol setDelegate:self];
+	
+	STAssertTrue([ILCannedURLProtocol canInitWithRequest:request], @"ILCannedURLProtocol delegate returned shouldInitWithRequest NO");
+}
+
+- (void)testCanInitWithRequestWithDelegateShouldInitWithRequestNO {
+	
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testCanInitWithRequestWithDelegateShouldInitWithRequestNO"]];
+	
+	[ILCannedURLProtocol setDelegate:self];
+	
+	STAssertFalse([ILCannedURLProtocol canInitWithRequest:request], @"ILCannedURLProtocol delegate returned shouldInitWithRequest YES");
+}
+
+
+
+
+
+
 
 #pragma mark - ILCannedURLProtocolDelegate
 
@@ -176,7 +213,25 @@
 			
 	}
 	
+	if ([request.URL.absoluteString isEqual:@"http://example.com/testStartLoadingWithDelegatePlainJSONResponse"]) {
+		requestData = [@"{\"testName\":\"testStartLoadingWithDelegatePlainJSONResponse\"}" dataUsingEncoding:NSUnicodeStringEncoding];
+	}
+	
+	
 	return requestData;
+}
+
+
+- (BOOL)shouldInitWithRequest:(NSURLRequest*)request {
+	if ([request.URL.absoluteString isEqual:@"http://example.com/testCanInitWithRequestWithDelegateShouldInitWithRequest"]) {
+		return YES;
+	}
+	
+	if ([request.URL.absoluteString isEqual:@"http://example.com/testCanInitWithRequestWithDelegateShouldInitWithRequestNO"]) {
+		return NO;
+	}
+	
+	return YES;
 }
 
 
