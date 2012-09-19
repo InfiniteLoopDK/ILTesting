@@ -34,6 +34,7 @@
 
 static id<ILCannedURLProtocolDelegate> gILDelegate = nil;
 
+static void(^startLoadingBlock)(NSURLRequest *request) = nil;
 static NSData *gILCannedResponseData = nil;
 static NSDictionary *gILCannedHeaders = nil;
 static NSInteger gILCannedStatusCode = 200;
@@ -44,6 +45,10 @@ static NSURL *gILSupportedBaseURL = nil;
 static CGFloat gILResponseDelay = 0;
 
 @implementation ILCannedURLProtocol
+
++ (void)setStartLoadingBlock:(void(^)(NSURLRequest *request))block {
+    startLoadingBlock = block;
+}
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
 	
@@ -130,6 +135,10 @@ static CGFloat gILResponseDelay = 0;
     NSURLRequest *request = [self request];
 	id<NSURLProtocolClient> client = [self client];
 	
+    if (startLoadingBlock) {
+        startLoadingBlock(request);
+    }
+    
 	NSInteger statusCode = gILCannedStatusCode;
 	NSDictionary *headers = gILCannedHeaders;
 	NSData *responseData = gILCannedResponseData;

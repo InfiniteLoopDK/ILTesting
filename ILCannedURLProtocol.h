@@ -36,7 +36,7 @@
 @end
 
 @interface ILCannedURLProtocol : NSURLProtocol
-
++ (void)setStartLoadingBlock:(void(^)(NSURLRequest *request))block;
 + (void)setDelegate:(id<ILCannedURLProtocolDelegate>)delegate;
 
 + (void)setCannedResponseData:(NSData*)data;
