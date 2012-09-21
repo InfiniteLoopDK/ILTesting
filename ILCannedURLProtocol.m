@@ -47,7 +47,8 @@ static CGFloat gILResponseDelay = 0;
 @implementation ILCannedURLProtocol
 
 + (void)setStartLoadingBlock:(void(^)(NSURLRequest *request))block {
-    startLoadingBlock = block;
+    Block_release(startLoadingBlock);
+    startLoadingBlock = Block_copy(block);
 }
 
 + (BOOL)canInitWithRequest:(NSURLRequest *)request {
