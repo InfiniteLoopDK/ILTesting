@@ -31,6 +31,7 @@
 - (NSData*)responseDataForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest*)request;
 @optional
 - (BOOL)shouldInitWithRequest:(NSURLRequest*)request;
+- (NSURL *)redirectForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest *)request;
 - (NSInteger)statusCodeForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest*)request;
 - (NSDictionary*)headersForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest*)request;
 @end

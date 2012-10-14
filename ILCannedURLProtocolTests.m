@@ -190,12 +190,34 @@
 }
 
 
-
-
+- (void)testRedirectForClient {
+    
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://redirect-test.com"]];
+    
+    [ILCannedURLProtocol setDelegate:self];
+    
+    NSURLResponse *response = nil;
+    NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:nil];
+	id responseObject = [NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil];
+	
+    STAssertNotNil(response, @"no canned response from http request");
+	STAssertNotNil(responseObject, @"no canned response object from http request");
+    STAssertEqualObjects(response.URL.absoluteString, @"http://redirected-response.com", @"response should have been redirected");
+    STAssertTrue([[responseObject objectForKey:@"REDIRECTED"] isEqual:@"YES"], @"wrong canned response");
+}
 
 
 
 #pragma mark - ILCannedURLProtocolDelegate
+
+- (NSURL *)redirectForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest *)request
+{
+    if ([request.HTTPMethod isEqualToString:@"GET"] && [request.URL.absoluteString isEqualToString:@"http://redirect-test.com"]) {
+        return [NSURL URLWithString:@"http://redirected-response.com"];
+    }
+    
+    return nil;
+}
 
 - (NSData*)responseDataForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest*)request {
 	
@@ -216,6 +238,11 @@
 	if ([request.URL.absoluteString isEqual:@"http://example.com/testStartLoadingWithDelegatePlainJSONResponse"]) {
 		requestData = [@"{\"testName\":\"testStartLoadingWithDelegatePlainJSONResponse\"}" dataUsingEncoding:NSUnicodeStringEncoding];
 	}
+    
+    if ([request.URL.absoluteString isEqual:@"http://redirected-response.com"]) {
+        id requestObject = [NSDictionary dictionaryWithObject:@"YES" forKey:@"REDIRECTED"];
+		requestData = [NSJSONSerialization dataWithJSONObject:requestObject options:0 error:nil];
+    }
 	
 	
 	return requestData;
