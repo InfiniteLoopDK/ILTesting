@@ -143,6 +143,21 @@ static CGFloat gILResponseDelay = 0;
 	NSInteger statusCode = gILCannedStatusCode;
 	NSDictionary *headers = gILCannedHeaders;
 	NSData *responseData = gILCannedResponseData;
+    
+    // Handle redirects
+    if (gILDelegate && [gILDelegate respondsToSelector:@selector(redirectForClient:request:)]) {
+        NSURL *redirectUrl = [gILDelegate redirectForClient:client request:request];
+        if (redirectUrl) {
+            NSHTTPURLResponse *redirectResponse = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
+                                                                              statusCode:302
+                                                                            headerFields: [NSDictionary dictionaryWithObject:[redirectUrl absoluteString] forKey:@"Location"]
+                                                                             requestTime:0.0];
+            
+            [client URLProtocol:self wasRedirectedToRequest:[NSURLRequest requestWithURL:redirectUrl] redirectResponse:redirectResponse];
+            return;
+        }
+    }
+
 	
 	if (gILCannedError) {
 		[client URLProtocol:self didFailWithError:gILCannedError];
@@ -178,9 +193,7 @@ static CGFloat gILResponseDelay = 0;
 		[client URLProtocolDidFinishLoading:self];
 		
 		[response release];
-		
 	}
-	
 }
 
 - (void)stopLoading {
