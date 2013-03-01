@@ -44,6 +44,12 @@ static NSArray *gILSupportedSchemes = nil;
 static NSURL *gILSupportedBaseURL = nil;
 static CGFloat gILResponseDelay = 0;
 
+static ResponseDataBlock gResposeDataBlock = nil;
+static ShouldInitRequestBlock gShouldInitRequestBlock = nil;
+static RedirectBlockForClient gRedirectBlockForClient = nil;
+static StatusCodeBlock gStatusCodeBlock = nil;
+static HeadersBlock gHeadersBlock = nil;
+
 @implementation ILCannedURLProtocol
 
 + (void)setStartLoadingBlock:(void(^)(NSURLRequest *request))block {
@@ -64,7 +70,11 @@ static CGFloat gILResponseDelay = 0;
 				   (!gILSupportedSchemes || [gILSupportedSchemes containsObject:request.URL.scheme])
 				   );
 	}
-	
+
+    if (gShouldInitRequestBlock) {
+        canInit = gShouldInitRequestBlock(request);
+    }
+
 	return canInit;
 }
 
@@ -131,11 +141,35 @@ static CGFloat gILResponseDelay = 0;
 	gILResponseDelay = responseDelay;
 }
 
++ (void)setResponseDataBlock:(ResponseDataBlock)responseDataBlock {
+    Block_release(gResposeDataBlock);
+    gResposeDataBlock = Block_copy(responseDataBlock);
+}
+
++ (void)setShouldInitWithRequestBlock:(ShouldInitRequestBlock)shouldInitRequestBlock {
+    Block_release(gShouldInitRequestBlock);
+    gShouldInitRequestBlock = Block_copy(shouldInitRequestBlock);
+}
+
++ (void)setRedirectForClientBlock:(RedirectBlockForClient)redirectForClientBlock {
+    Block_release(gRedirectBlockForClient);
+    gRedirectBlockForClient = Block_copy(redirectForClientBlock);
+}
+
++ (void)setStatusCodeBlock:(StatusCodeBlock)statusCodeBlock {
+    Block_release(gStatusCodeBlock);
+    gStatusCodeBlock = Block_copy(statusCodeBlock);
+}
+
++ (void)setHeadersBlock:(HeadersBlock)headersBlock {
+    Block_release(gHeadersBlock);
+    gHeadersBlock = Block_copy(headersBlock);
+}
 
 - (void)startLoading {
     NSURLRequest *request = [self request];
 	id<NSURLProtocolClient> client = [self client];
-	
+
     if (startLoadingBlock) {
         startLoadingBlock(request);
     }
@@ -145,40 +179,60 @@ static CGFloat gILResponseDelay = 0;
 	NSData *responseData = gILCannedResponseData;
     
     // Handle redirects
-    if (gILDelegate && [gILDelegate respondsToSelector:@selector(redirectForClient:request:)]) {
-        NSURL *redirectUrl = [gILDelegate redirectForClient:client request:request];
-        if (redirectUrl) {
-            NSHTTPURLResponse *redirectResponse = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
-                                                                              statusCode:302
-                                                                            headerFields: [NSDictionary dictionaryWithObject:[redirectUrl absoluteString] forKey:@"Location"]
-                                                                             requestTime:0.0];
-            
-            [client URLProtocol:self wasRedirectedToRequest:[NSURLRequest requestWithURL:redirectUrl] redirectResponse:redirectResponse];
-            return;
-        }
+
+    NSURL *redirectUrl = nil;
+
+    if (gRedirectBlockForClient) {
+        redirectUrl = gRedirectBlockForClient(client,request);
+    } else if (gILDelegate && [gILDelegate respondsToSelector:@selector(redirectForClient:request:)]) {
+        redirectUrl = [gILDelegate redirectForClient:client request:request];
     }
 
-	
+    if (redirectUrl) {
+        NSHTTPURLResponse *redirectResponse = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
+                                                                          statusCode:302
+                                                                        headerFields: [NSDictionary dictionaryWithObject:[redirectUrl absoluteString] forKey:@"Location"]
+                                                                         requestTime:0.0];
+
+        [client URLProtocol:self wasRedirectedToRequest:[NSURLRequest requestWithURL:redirectUrl] redirectResponse:redirectResponse];
+        return;
+    }
+
+
+
 	if (gILCannedError) {
 		[client URLProtocol:self didFailWithError:gILCannedError];
 		
 	} else {
-		
-		if (gILDelegate && [gILDelegate respondsToSelector:@selector(responseDataForClient:request:)]) {
-			
-			if ([gILDelegate respondsToSelector:@selector(statusCodeForClient:request:)]) {
-				statusCode  = [gILDelegate statusCodeForClient:client request:request];
+
+
+
+        if (gILDelegate && [gILDelegate respondsToSelector:@selector(responseDataForClient:request:)]) {
+            
+            if ([gILDelegate respondsToSelector:@selector(statusCodeForClient:request:)]) {
+                statusCode  = [gILDelegate statusCodeForClient:client request:request];
 			}
 			
 			if ([gILDelegate respondsToSelector:@selector(headersForClient:request:)]) {
 				headers  = [gILDelegate headersForClient:client request:request];
 			}
-						
+            
 			responseData = [gILDelegate responseDataForClient:client request:request];
 		}
-		
-		
-		NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
+
+        if (gResposeDataBlock) {
+            responseData = gResposeDataBlock(client,request);
+        }
+
+        if (gStatusCodeBlock) {
+            statusCode = gStatusCodeBlock(client,request);
+        }
+
+        if (gHeadersBlock) {
+            headers = gHeadersBlock(client,request);
+        }
+
+        NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
 											   statusCode:statusCode
 											 headerFields:headers 
 											  requestTime:0.0];

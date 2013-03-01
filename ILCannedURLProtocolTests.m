@@ -28,7 +28,13 @@
 	[ILCannedURLProtocol setSupportedMethods:nil];
 	[ILCannedURLProtocol setSupportedSchemes:nil];
 	[ILCannedURLProtocol setSupportedBaseURL:nil];
-	
+
+    [ILCannedURLProtocol setResponseDataBlock:nil];
+    [ILCannedURLProtocol setShouldInitWithRequestBlock:nil];
+    [ILCannedURLProtocol setRedirectForClientBlock:nil];
+    [ILCannedURLProtocol setStatusCodeBlock:nil];
+    [ILCannedURLProtocol setHeadersBlock:nil];
+
 	[ILCannedURLProtocol setResponseDelay:0];
 }
 
@@ -130,7 +136,7 @@
 }
 
 - (void)testStartLoadingWithDelegate {
-	
+
 	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testStartLoadingWithDelegate"]];
 	
 	[ILCannedURLProtocol setDelegate:self];
@@ -206,6 +212,128 @@
     STAssertTrue([[responseObject objectForKey:@"REDIRECTED"] isEqual:@"YES"], @"wrong canned response");
 }
 
+- (void)testResponseBlock {
+
+    [ILCannedURLProtocol setResponseDataBlock:^NSData *(id<NSURLProtocolClient> client, NSURLRequest *request) {
+
+        NSData *requestData = nil;
+
+        if ([request.URL.absoluteString isEqual:@"http://example.com/testResponseBlock"]) {
+            id requestObject = [NSDictionary dictionaryWithObjectsAndKeys:@"testResponseBlock", @"testName", nil];
+            requestData = [NSJSONSerialization dataWithJSONObject:requestObject options:0 error:nil];
+            
+        }
+
+        return requestData;
+    }];
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testResponseBlock"]];
+
+	NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:nil error:nil];
+	id responseObject = [NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil];
+
+	STAssertNotNil(responseObject, @"no canned response from http request");
+	STAssertTrue([responseObject isKindOfClass:[NSDictionary class]], @"canned response has wrong format (not dictionary)");
+	STAssertTrue([[responseObject objectForKey:@"testName"] isEqual:@"testResponseBlock"], @"wrong canned response");
+}
+
+- (void)testCanInitWithRequestWithShouldInitWithRequestBlock {
+
+    [ILCannedURLProtocol setShouldInitWithRequestBlock:^BOOL(NSURLRequest *request) {
+        if ([request.URL.absoluteString isEqual:@"http://example.com/testCanInitWithRequestWithShouldInitWithRequestBlock"]) {
+            return YES;
+        }
+        return NO;
+    }];
+
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testCanInitWithRequestWithShouldInitWithRequestBlock"]];
+
+	STAssertTrue([ILCannedURLProtocol canInitWithRequest:request], @"ILCannedURLProtocol delegate returned shouldInitWithRequest NO");
+}
+
+- (void)testCanInitWithRequestWithShouldInitWithRequestBlockNO {
+
+    [ILCannedURLProtocol setShouldInitWithRequestBlock:^BOOL(NSURLRequest *request) {
+        if ([request.URL.absoluteString isEqual:@"http://example.com/testCanInitWithRequestWithShouldInitWithRequestBlockNO"]) {
+            return NO;
+        }
+        return YES;
+    }];
+
+	NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testCanInitWithRequestWithShouldInitWithRequestBlockNO"]];
+
+	STAssertFalse([ILCannedURLProtocol canInitWithRequest:request], @"ILCannedURLProtocol delegate returned shouldInitWithRequest YES");
+}
+
+
+- (void)testRedirectForClientBlock {
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://redirect-test.com/testRedirectForClientBlock"]];
+
+
+    [ILCannedURLProtocol setRedirectForClientBlock:^NSURL *(id<NSURLProtocolClient> client, NSURLRequest *request) {
+        if ([request.HTTPMethod isEqualToString:@"GET"] && [request.URL.absoluteString isEqualToString:@"http://redirect-test.com/testRedirectForClientBlock"]) {
+            return [NSURL URLWithString:@"http://redirected-response.com/testRedirectForClientBlock"];
+        }
+
+        return nil;
+    }];
+
+    [ILCannedURLProtocol setResponseDataBlock:^NSData *(id<NSURLProtocolClient> client, NSURLRequest *request) {
+        NSData *requestData = nil;
+
+        if ([request.URL.absoluteString isEqual:@"http://redirected-response.com/testRedirectForClientBlock"]) {
+            id requestObject = [NSDictionary dictionaryWithObject:@"YES" forKey:@"REDIRECTED"];
+            requestData = [NSJSONSerialization dataWithJSONObject:requestObject options:0 error:nil];
+        }
+        return requestData;
+    }];
+
+    NSURLResponse *response = nil;
+    NSData *responseData = [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:nil];
+	id responseObject = [NSJSONSerialization JSONObjectWithData:responseData options:0 error:nil];
+
+    STAssertNotNil(response, @"no canned response from http request");
+	STAssertNotNil(responseObject, @"no canned response object from http request");
+    STAssertEqualObjects(response.URL.absoluteString, @"http://redirected-response.com/testRedirectForClientBlock", @"response should have been redirected");
+    STAssertTrue([[responseObject objectForKey:@"REDIRECTED"] isEqual:@"YES"], @"wrong canned response");
+}
+
+- (void)testStatusCodeBlock {
+    
+    [ILCannedURLProtocol setStatusCodeBlock:^NSInteger(id<NSURLProtocolClient> client, NSURLRequest *request) {
+        if ([request.URL.absoluteString isEqual:@"http://example.com/testStatusCodeBlock"]) {
+            return 204;
+        }
+        return 201;
+     }];
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testStatusCodeBlock"]];
+
+    NSHTTPURLResponse *response = nil;
+    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:nil];
+
+    STAssertEquals([response statusCode], 204, @"Wrong status code");
+}
+
+- (void)testHeadersBlock {
+
+    [ILCannedURLProtocol setHeadersBlock:^NSDictionary *(id<NSURLProtocolClient> client, NSURLRequest *request) {
+        if ([request.URL.absoluteString isEqual:@"http://example.com/testHeadersBlock"]) {
+            return @{@"key": @"value"};
+        }
+        return nil;
+    }];
+
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:@"http://example.com/testHeadersBlock"]];
+
+    NSHTTPURLResponse *response = nil;
+    [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:nil];
+
+    NSDictionary *headers = [response allHeaderFields];
+    STAssertNotNil(headers, @"no headers");
+    STAssertTrue([[headers objectForKey:@"key"] isEqual:@"value"], @"no key on the header");
+}
 
 
 #pragma mark - ILCannedURLProtocolDelegate

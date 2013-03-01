@@ -36,9 +36,23 @@
 - (NSDictionary*)headersForClient:(id<NSURLProtocolClient>)client request:(NSURLRequest*)request;
 @end
 
+
+typedef NSData *(^ResponseDataBlock)(id<NSURLProtocolClient> client, NSURLRequest *request);
+typedef BOOL (^ShouldInitRequestBlock)(NSURLRequest *request);
+typedef NSURL *(^RedirectBlockForClient)(id<NSURLProtocolClient> client, NSURLRequest *request);
+typedef NSInteger (^StatusCodeBlock)(id<NSURLProtocolClient> client, NSURLRequest* request);
+typedef NSDictionary *(^HeadersBlock)(id<NSURLProtocolClient> client, NSURLRequest* request);
+
 @interface ILCannedURLProtocol : NSURLProtocol
-+ (void)setStartLoadingBlock:(void(^)(NSURLRequest *request))block;
+
 + (void)setDelegate:(id<ILCannedURLProtocolDelegate>)delegate;
+
++ (void)setStartLoadingBlock:(void(^)(NSURLRequest *request))block;
++ (void)setResponseDataBlock:(ResponseDataBlock)responseDataBlock;
++ (void)setShouldInitWithRequestBlock:(ShouldInitRequestBlock)shouldInitRequestBlock;
++ (void)setRedirectForClientBlock:(RedirectBlockForClient)redirectForClientBlock;
++ (void)setStatusCodeBlock:(StatusCodeBlock)statusCodeBlock;
++ (void)setHeadersBlock:(HeadersBlock)headersBlock;
 
 + (void)setCannedResponseData:(NSData*)data;
 + (void)setCannedHeaders:(NSDictionary*)headers;
