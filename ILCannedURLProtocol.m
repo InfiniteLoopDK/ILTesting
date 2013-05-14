@@ -160,6 +160,7 @@ static CGFloat gILResponseDelay = 0;
 
 	
 	if (gILCannedError) {
+		[NSThread sleepForTimeInterval:gILResponseDelay];
 		[client URLProtocol:self didFailWithError:gILCannedError];
 		
 	} else {
