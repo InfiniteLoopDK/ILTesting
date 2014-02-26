@@ -27,11 +27,6 @@
 
 #import "ILCannedURLProtocol.h"
 
-// Undocumented initializer obtained by class-dump - don't use this in production code destined for the App Store
-@interface NSHTTPURLResponse(UndocumentedInitializer)
-- (id)initWithURL:(NSURL*)URL statusCode:(NSInteger)statusCode headerFields:(NSDictionary*)headerFields requestTime:(double)requestTime;
-@end
-
 static id<ILCannedURLProtocolDelegate> gILDelegate = nil;
 
 static void(^startLoadingBlock)(NSURLRequest *request) = nil;
@@ -150,8 +145,8 @@ static CGFloat gILResponseDelay = 0;
         if (redirectUrl) {
             NSHTTPURLResponse *redirectResponse = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
                                                                               statusCode:302
-                                                                            headerFields: [NSDictionary dictionaryWithObject:[redirectUrl absoluteString] forKey:@"Location"]
-                                                                             requestTime:0.0];
+                                                                             HTTPVersion:@"HTTP/1.1"
+                                                                            headerFields: [NSDictionary dictionaryWithObject:[redirectUrl absoluteString] forKey:@"Location"]];
             
             [client URLProtocol:self wasRedirectedToRequest:[NSURLRequest requestWithURL:redirectUrl] redirectResponse:redirectResponse];
             return;
@@ -180,8 +175,8 @@ static CGFloat gILResponseDelay = 0;
 		
 		NSHTTPURLResponse *response = [[NSHTTPURLResponse alloc] initWithURL:[request URL]
 											   statusCode:statusCode
-											 headerFields:headers 
-											  requestTime:0.0];
+                                              HTTPVersion:@"HTTP/1.1"
+                                             headerFields:headers];
 		
 		[NSThread sleepForTimeInterval:gILResponseDelay];
 		//NSDate *loopUntil = [NSDate dateWithTimeIntervalSinceNow:gILResponseDelay];
