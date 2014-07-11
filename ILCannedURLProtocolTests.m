@@ -313,7 +313,7 @@
     NSHTTPURLResponse *response = nil;
     [NSURLConnection sendSynchronousRequest:request returningResponse:&response error:nil];
 
-    STAssertEquals([response statusCode], 204, @"Wrong status code");
+    STAssertEquals([response statusCode], 204L, @"Wrong status code");
 }
 
 - (void)testHeadersBlock {
