@@ -201,6 +201,7 @@ static HeadersBlock gHeadersBlock = nil;
 
 
 	if (gILCannedError) {
+		[NSThread sleepForTimeInterval:gILResponseDelay];
 		[client URLProtocol:self didFailWithError:gILCannedError];
 		
 	} else {
